@@ -12,20 +12,17 @@ import java.util.stream.Stream;
 
 public class Gamers {
     private static final String DELIMITER = ",";
+    private final static String FIND_ALL = "all";
     private static final int START_NUMBER = 0;
     
     private final Map<Gamer, Integer> gamers;
-    
-    public static Gamers newInstance() {
-        return new Gamers();
-    }
     
     private Gamers() {
         this.gamers = new LinkedHashMap<>();
     }
     
-    public int getSize() {
-        return gamers.size();
+    public static Gamers newInstance() {
+        return new Gamers();
     }
     
     public List<String> getGamerNames() {
@@ -34,20 +31,12 @@ public class Gamers {
             .collect(Collectors.toList());
     }
     
-    public int getLineNumber(String gamerName) {
-        return getLineNumber(Gamer.from(gamerName));
-    }
-    
-    private int getLineNumber(Gamer gamer) {
+    public int getLineNumber(Gamer gamer) {
         Integer lineNumber = gamers.get(gamer);
         if (lineNumber == null) {
             throw new IllegalArgumentException(ErrorMessages.NOT_FIND_GAMER.message());
         }
         return lineNumber;
-    }
-    
-    public Stream<Gamer> keyStream() {
-        return gamers.keySet().stream();
     }
     
     public void addGamers(String gamerNames) {
@@ -58,5 +47,21 @@ public class Gamers {
     
     public boolean isSameSize(int size) {
         return size == gamers.size();
+    }
+    
+    public boolean isGamerNamesNeeded() {
+        return gamers.isEmpty();
+    }
+    
+    public boolean isGamerNameAll(String gamerName) {
+        return FIND_ALL.equals(gamerName);
+    }
+    
+    public Stream<Gamer> keyStream() {
+        return gamers.keySet().stream();
+    }
+    
+    public int getSize() {
+        return gamers.size();
     }
 }

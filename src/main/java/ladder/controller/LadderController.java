@@ -1,73 +1,74 @@
 package ladder.controller;
 
-import ladder.core.controller.Controller;
+import ladder.core.controller.ILadderController;
+import ladder.core.message.Message;
 import ladder.domain.gamer.Gamers;
-import ladder.domain.gamer.info.Gamer;
-import ladder.domain.ladder.Ladder;
+import ladder.domain.ladder.LadderModel;
+import ladder.domain.result.FinalResult;
 import ladder.domain.reward.Rewards;
-import ladder.message.EmptyMessage;
-import ladder.message.result.ResultMessage;
-import ladder.message.result.RewardMessage;
+import ladder.message.InputGamerNameMessage;
+import ladder.message.InputGamersMessage;
+import ladder.message.InputLadderSizeMessage;
+import ladder.message.InputRewardMessage;
+import ladder.message.LadderResultMessage;
+import ladder.message.ResultMessage;
 import ladder.view.MainView;
 
-public class LadderController implements Controller {
-    private final static EmptyMessage EMPTY_MESSAGE = new EmptyMessage();
-    private final static String EMPTY_STRING = "";
-    private final static String RESULT_DELIMITER = ":";
-    private final static String ENTER = System.getProperty("line.separator");
-    private final static String FIND_ALL = "all";
-    
-    private final Gamers gamers;
-    private final Ladder ladder;
-    private final Rewards rewards;
-    
-    private final MainView mainView;
-    
-    public LadderController() {
-        gamers = Gamers.newInstance();
-        rewards = Rewards.newInstance();
-        ladder = Ladder.newInstance();
-        mainView = new MainView(this);
-        mainView.render(EMPTY_MESSAGE);
-    }
+public class LadderController implements ILadderController {
+    private final Gamers gamers = Gamers.newInstance();
+    private final Rewards rewards = Rewards.newInstance();
+    private final LadderModel ladderModel = LadderModel.newInstance();
+    private final FinalResult results = FinalResult.newInstance();
+    private final MainView mainView = new MainView(this);
     
     @Override
     public void action() {
-        mainView.render(EMPTY_MESSAGE);
+        mainView.render(getInputStepMessage());
     }
     
     @Override
     public void inputGamers(String gamerNames) {
         gamers.addGamers(gamerNames);
-        mainView.render(EMPTY_MESSAGE);
+        mainView.render(getInputStepMessage());
     }
     
     @Override
     public void inputReward(String reward) {
-        rewards.addRewards(gamers, reward);
-        mainView.render(EMPTY_MESSAGE);
+        rewards.setRewards(gamers, reward);
+        mainView.render(getInputStepMessage());
     }
     
     @Override
     public void inputLadderSize(int ladderSize) {
-        ladder.makeLadder(ladderSize, gamers);
-        mainView.render(new ResultMessage(gamers.getGamerNames(), ladder, rewards.getRewardNames()));
+        ladderModel.makeLadder(ladderSize, gamers);
+        results.goToGoal(gamers, ladderModel, rewards);
+        mainView.render(getInputStepMessage());
+    }
+    
+    @Override
+    public void callAfterLadderResult() {
+        mainView.render(new InputGamerNameMessage());
     }
     
     @Override
     public void inputGamerName(String gamerName) {
-        if (FIND_ALL.equals(gamerName)) {
-            mainView.render(getAllRewards());
+        if (gamers.isGamerNameAll(gamerName)) {
+            mainView.render(new ResultMessage(results.getAllResults()));
             return;
         }
-        mainView.render(new RewardMessage(rewards.getReward(ladder.getRewardNumber(gamers.getLineNumber(gamerName)))));
+        mainView.render(new ResultMessage(results.getResult(gamerName)));
     }
     
-    private RewardMessage getAllRewards() {
-        return new RewardMessage(gamers.keyStream()
-          .map(Gamer::getName)
-          .map(name -> name + RESULT_DELIMITER + rewards.getReward(ladder.getRewardNumber(gamers.getLineNumber(name))))
-          .reduce((info1, info2) -> info1 + ENTER + info2)
-          .orElse(EMPTY_STRING));
+    private Message getInputStepMessage() {
+        if (gamers.isGamerNamesNeeded()) {
+            return new InputGamersMessage();
+        }
+        if (rewards.isRewardsNeeded()) {
+            return new InputRewardMessage();
+        }
+        if (ladderModel.isLadderSizeNeeded()) {
+            return new InputLadderSizeMessage();
+        }
+        return new LadderResultMessage(gamers.getGamerNames(), ladderModel, rewards.getRewardNames());
     }
 }

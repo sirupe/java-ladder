@@ -1,4 +1,4 @@
-package ladder.result;
+package ladder.reward;
 
 import ladder.domain.gamer.Gamers;
 import ladder.domain.reward.Rewards;
@@ -31,7 +31,7 @@ class RewardsTest {
         
         //Then
         Assertions.assertThatIllegalArgumentException()
-          .isThrownBy(() -> rewards.addRewards(gamers, result))
+          .isThrownBy(() -> rewards.setRewards(gamers, result))
           .withMessage(ErrorMessages.NOT_MATCH_COUNT.message());
     }
     
@@ -41,7 +41,7 @@ class RewardsTest {
         //Given
         List<String> givenRewardNames = Arrays.asList("꽝", "5000", "1000");
         gamers.addGamers("aa,bb,cc");
-        rewards.addRewards(gamers, "꽝,5000,1000");
+        rewards.setRewards(gamers, "꽝,5000,1000");
         
         //When
         List<String> resultRewardNames = rewards.getRewardNames();
@@ -55,13 +55,13 @@ class RewardsTest {
     void getGameRewardTest() {
         //Given
         gamers.addGamers("aa,bb,cc");
-        rewards.addRewards(gamers, "꽝,5000,1000");
+        rewards.setRewards(gamers, "꽝,5000,1000");
         
         //When
-        String reward = rewards.getReward(0);
+        Reward reward = rewards.getReward(0);
         
         //Then
-        Assertions.assertThat(reward).isEqualTo("꽝");
+        Assertions.assertThat(reward.getReward()).isEqualTo("꽝");
     }
     
     @Test
@@ -69,11 +69,40 @@ class RewardsTest {
     void getGameRewardFailTest() {
         //Given
         gamers.addGamers("aa,bb,cc");
-        rewards.addRewards(gamers, "꽝,5000,1000");
+        rewards.setRewards(gamers, "꽝,5000,1000");
         
         //Then
         Assertions.assertThatIllegalArgumentException()
             .isThrownBy(() -> rewards.getReward(4))
             .withMessage(ErrorMessages.OVER_INPUT_REWARD.message());
+    }
+    
+    @Test
+    @DisplayName("[success] 리워드 정보가 하나라도 있으면 false")
+    void isRewardsNeededFalseTest() {
+        //Given
+        Gamers gamers = Gamers.newInstance();
+        gamers.addGamers("a");
+        Rewards rewards = Rewards.newInstance();
+        rewards.setRewards(gamers, "1");
+        
+        //When
+        boolean rewardNeeded = rewards.isRewardsNeeded();
+        
+        //Then
+        Assertions.assertThat(rewardNeeded).isFalse();
+    }
+    
+    @Test
+    @DisplayName("[success] 리워드 정보가 하나도 없으면 true")
+    void isRewardsNeededTrueTest() {
+        //Given
+        Rewards rewards = Rewards.newInstance();
+        
+        //When
+        boolean rewardNeeded = rewards.isRewardsNeeded();
+        
+        //Then
+        Assertions.assertThat(rewardNeeded).isTrue();
     }
 }
